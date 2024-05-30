@@ -7,20 +7,17 @@ chrome.runtime.onInstalled.addListener(() => {
 function addCommentData() {
     const lines = document.querySelectorAll('span.pl-c');
     if (lines) {
-        const data = {};
         for (let line of lines) {
-            const dataCodeText = line.getAttribute('data-code-text');
-            const parent = line.parentElement;
-            const parentId = parent ? parent.getAttribute('id') : null;
-            data[`${parentId}`] = `${dataCodeText}`
-        }
-        for (let id in data) {
-            let p = document.createElement('p');
-            p.textContent = data[id];
-            let el = document.querySelector(`#${id}`);
-            el.appendChild(p);
+            // let originalComment = line.getAttribute('data-code-text');
+            // let translatedComment = 이걸 구현해야함
+            // line.setAttribute('data-code-text', translatedComment);
+            line.setAttribute('data-code-text', "test!!!");
         }
     }
+}
+
+function reloadPage() {
+    window.location.reload(true);
 }
 
 const github = 'https://github.com/';
@@ -40,11 +37,10 @@ chrome.action.onClicked.addListener(async (tab) => {
                 func: addCommentData,
             });
         } else if (nextState === 'OFF') {
-            // 구현중...
-            // chrome.scripting.executeScript({
-            //     target: { tabId: tab.id },
-            //     func: deleteCommentData,
-            // });
+            chrome.scripting.executeScript({
+                target: { tabId: tab.id },
+                func: reloadPage,
+            });
         }
     }
 });
