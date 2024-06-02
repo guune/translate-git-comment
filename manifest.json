@@ -31,5 +31,8 @@
                 "mac": "Alt+B"
             }
         }
-    }
+    },
+    "host_permissions": [
+        "https://translate.google.com/"
+    ]
 }
