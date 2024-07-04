@@ -5,6 +5,16 @@ chrome.runtime.onInstalled.addListener(() => {
 });
 
 
+class comments {
+    constructor(element, lineNumber) {
+        this.element = element;
+        this.lineNumber = lineNumber;
+        this.text = element.innerText;
+    }
+
+}
+
+
 async function addCommentData() {
     // POST 메서드 구현 예제
     async function postData(url = "", data = {}) {
@@ -24,11 +34,42 @@ async function addCommentData() {
     }
 
     const lines = document.querySelectorAll('span.pl-c');
+
+    let commentGroups = [];
+    let currentGroup = [];
+    let lastLineNumber = -1;
+
+    codeLines.forEach(line => {
+        const lineNumber = parseInt(line.id.substring(2)); // "LC1" -> 1
+        const commentSpan = line.querySelector('span.pl-c');
+
+        if (commentSpan) {
+            if (lineNumber !== lastLineNumber + 1) {
+                if (currentGroup.length > 0) {
+                    commentGroups.push(currentGroup);
+                    currentGroup = [];
+                }
+            }
+            currentGroup.push({ line, commentSpan });
+            lastLineNumber = lineNumber;
+        } else if (currentGroup.length > 0) {
+            commentGroups.push(currentGroup);
+            currentGroup = [];
+            lastLineNumber = -1;
+        }
+    });
+
+    if (currentGroup.length > 0) {
+        commentGroups.push(currentGroup);
+    }
     if (lines) {
         for (let line of lines) {
+            const parent = line.parentElement;
+            console.log("parent = ", parent)
+            console.log("line = ", line);
             // todo: 한줄 한줄 번역하니깐 느림. 파싱이 필요해 보임
-            let translatedCommentJson = await postData("http://localhost:8080/translate/", { text: `${line.innerText}` });
-            line.innerHTML = translatedCommentJson["translatedComment"];
+            // let translatedCommentJson = await postData("http://localhost:8080/translate/", { "text": `${line.innerText}` });
+            // line.innerHTML = translatedCommentJson["translatedComment"];
             // line.setAttribute('data-code-text', "test!!!");
         }
     }
