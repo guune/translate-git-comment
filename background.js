@@ -4,37 +4,39 @@ chrome.runtime.onInstalled.addListener(() => {
     });
 });
 
-
-class comments {
-    constructor(element, lineNumber) {
-        this.element = element;
-        this.lineNumber = lineNumber;
-        this.text = element.innerText;
+class CommentGroup {
+    constructor(comments) {
+        this.comments = comments;
+        this.text = comments.map(c => c.commentSpan.innerText).join('\n');
     }
 
+    applyTranslation(translatedText) {
+        const translatedLines = translatedText.split('\n');
+        this.comments.forEach((comment, index) => {
+            comment.commentSpan.innerText = translatedLines[index] || '';
+        });
+    }
 }
 
-
 async function addCommentData() {
-    // POST 메서드 구현 예제
     async function postData(url = "", data = {}) {
         const response = await fetch(url, {
-            method: "POST", // *GET, POST, PUT, DELETE 등
-            mode: "cors", // no-cors, *cors, same-origin
-            cache: "no-cache", // *default, no-cache, reload, force-cache, only-if-cached
-            credentials: "same-origin", // include, *same-origin, omit
+            method: "POST",
+            mode: "cors",
+            cache: "no-cache",
+            credentials: "same-origin",
             headers: {
                 "Content-Type": "application/json",
             },
-            redirect: "follow", // manual, *follow, error
-            referrerPolicy: "no-referrer", // no-referrer, *no-referrer-when-downgrade, origin, origin-when-cross-origin, same-origin, strict-origin, strict-origin-when-cross-origin, unsafe-url
-            body: JSON.stringify(data), // body의 데이터 유형은 반드시 "Content-Type" 헤더와 일치해야 함
+            redirect: "follow",
+            referrerPolicy: "no-referrer",
+            body: JSON.stringify(data),
         });
-        return response.json(); // JSON 응답을 네이티브 JavaScript 객체로 파싱
+        return response.json();
     }
 
-    const lines = document.querySelectorAll('span.pl-c');
 
+    const codeLines = document.querySelectorAll('.react-code-text.react-code-line-contents-no-virtualization');
     let commentGroups = [];
     let currentGroup = [];
     let lastLineNumber = -1;
@@ -42,35 +44,34 @@ async function addCommentData() {
     codeLines.forEach(line => {
         const lineNumber = parseInt(line.id.substring(2)); // "LC1" -> 1
         const commentSpan = line.querySelector('span.pl-c');
-
         if (commentSpan) {
             if (lineNumber !== lastLineNumber + 1) {
                 if (currentGroup.length > 0) {
-                    commentGroups.push(currentGroup);
+                    commentGroups.push(new CommentGroup(currentGroup));
                     currentGroup = [];
                 }
             }
             currentGroup.push({ line, commentSpan });
             lastLineNumber = lineNumber;
         } else if (currentGroup.length > 0) {
-            commentGroups.push(currentGroup);
+            commentGroups.push(new CommentGroup(currentGroup));
             currentGroup = [];
             lastLineNumber = -1;
         }
     });
 
     if (currentGroup.length > 0) {
-        commentGroups.push(currentGroup);
+        commentGroups.push(new CommentGroup(currentGroup));
     }
-    if (lines) {
-        for (let line of lines) {
-            const parent = line.parentElement;
-            console.log("parent = ", parent)
-            console.log("line = ", line);
-            // todo: 한줄 한줄 번역하니깐 느림. 파싱이 필요해 보임
-            // let translatedCommentJson = await postData("http://localhost:8080/translate/", { "text": `${line.innerText}` });
-            // line.innerHTML = translatedCommentJson["translatedComment"];
-            // line.setAttribute('data-code-text', "test!!!");
+
+    console.log("commemtGroups = ", commentGroups);
+    for (let group of commentGroups) {
+        try {
+            console.log("group = ", group);
+            // let translatedCommentJson = await postData("http://localhost:8080/translate/", { "text": group.text });
+            // group.applyTranslation(translatedCommentJson["translatedComment"]);
+        } catch (error) {
+            console.error("Translation error:", error);
         }
     }
 }
